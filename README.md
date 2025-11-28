@@ -1,6 +1,6 @@
 ﻿# Universal DNA Motif Scanner
 
-A statistical bioinformatics web application that identifies and visualizes transcription factor binding sites in DNA sequences.
+Project Overview: A statistical bioinformatics web application that identifies and visualizes transcription factor binding sites in DNA sequences.
 
 Core Logic: Uses Position Weight Matrices (PWMs) from the JASPAR database to calculate binding affinity.
 
@@ -9,4 +9,5 @@ Statistical Rigor: Implements Monte Carlo simulations to calculate P-values and 
 Tech Stack: Python, Streamlit, Biopython, Matplotlib, Pandas.
 
  
+
 
