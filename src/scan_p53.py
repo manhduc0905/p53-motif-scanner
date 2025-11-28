@@ -141,8 +141,10 @@ def threshold_p(p, n_scores):
     print(n_scores[ind])
     return n_scores[ind]
 
-def to_CSV(seq_list, pwm_all, motif_ids, filename= "p53-motif-scanner\output\motif_hits.csv", threshold_fraction= 0.5, pval_cutoff=0.001):
-    os.makedirs(os.path.dirname(filename), exist_ok=True)
+def to_CSV(seq_list, pwm_all, motif_ids, filename, threshold_fraction= 0.5, pval_cutoff=0.001):
+    directory = os.path.dirname(filename)
+    if directory: 
+        os.makedirs(directory, exist_ok=True)
     with open(filename, "w", newline="") as f:
         write = csv.writer(f)
         write.writerow(["Sequence_ID", "Motif_ID", "Position", "Direction", "Score", "P-value", "Full/ Half-site"])
