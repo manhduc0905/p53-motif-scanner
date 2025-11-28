@@ -71,6 +71,8 @@ if st.button("Scan Sequence"):
                     
             except Exception as e:
                 st.error(f"An error occurred: {e}")
+                
+scan_results = st.session_state.get('scan_results')
 if st.session_state['scan_results'] is not None and not st.session_state['scan_results'].empty:
     
     df = st.session_state['scan_results']
@@ -102,3 +104,4 @@ if st.session_state['scan_results'] is not None and not st.session_state['scan_r
             st.dataframe(df)
     csv_data = df.to_csv(index=False).encode('utf-8')
     st.download_button("Download All Results (CSV)", csv_data, f"{tf_name}_hits.csv", "text/csv")
+
