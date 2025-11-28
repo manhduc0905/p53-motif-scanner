@@ -70,7 +70,7 @@ if st.button("Scan Sequence"):
                 st.error(f"An error occurred: {e}")
 
 scan_results = st.session_state.get('scan_results')
-if st.session_state['scan_results'] is not None and not st.session_state['scan_results'].empty:
+if scan_results:
     
     df = st.session_state['scan_results']
     unique_seqs = st.session_state['unique_seqs']
