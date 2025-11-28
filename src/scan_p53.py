@@ -12,7 +12,6 @@ import argparse
 import sys
 
 bases = {'A': 0, 'T': 1, 'C': 2, 'G': 3}
-background = 0.25
 
 def reader(tf_name = "TP53"):
     url = f"https://jaspar.elixir.no/api/v1/matrix/?search={tf_name}&collection=CORE&tax_group=vertebrates"
@@ -42,8 +41,19 @@ def read_input(input_data, is_file=False):
                 sequences.append((f"seq{idx}", line))
 
     return sequences
+def calculate_background(seq_list):
+    counts = {"A":0, "T":0, "C":0, "G":0}
+    total = 0
+    for _, seq in seq_list:
+        for base in seq:
+            if base in counts:
+                counts[base] += 1
+                total +=1
+    if (total == 0):
+        return {"A":0.25, "T":0.25, "C":0.25, "G":0.25}
+    return {b: count/total for b, count in counts.items()}
 
-def get_PWM(pfm, pseudocount = 0.1):
+def get_PWM(pfm, gc, pseudocount = 0.1):
     pwm = []
     length = len(pfm["A"])
 
@@ -52,19 +62,19 @@ def get_PWM(pfm, pseudocount = 0.1):
         total = sum(pfm[b][i] for b, pos in bases.items()) + pseudocount*4
         for b in bases:
             freq = (pfm[b][i] + pseudocount)/ total
-            score = math.log2(freq/ background) 
+            score = math.log2(freq/ gc[b]) 
             column.append(score)
         pwm.append(column)
     return pwm
 
-def get_allPWM(ids):
+def get_allPWM(ids, gc):
     pwm_all = []
     for props in ids:
         id = props[0]
         url = props[1]
         response = requests.get(url)
         pwm = response.json()["pfm"]
-        pwm_all.append(get_PWM(pwm))
+        pwm_all.append(get_PWM(pwm, gc))
     return pwm_all
 
 def scan(seq, pwm, sign, threshold_fraction = 0.5, fixed_threshold= None):
@@ -112,17 +122,18 @@ def reverse_complement(seq):
     complement = {'A':'T', 'T':'A', 'C':'G', 'G':'C'}
     return ''.join(complement.get(b,b) for b in seq[::-1])
 
-def generate_null_dist(pwm, n = 10000):
+def generate_null_dist(pwm, gc, n = 10000):
     n_scores = []
     motif_length = len(pwm)
+    ordered_weights = [gc['A'], gc['T'], gc['C'], gc['G']]
     options = [0,1,2,3]
 
     for _ in range(n):
-        random_seq = [random.choice(options) for _ in range(motif_length)]
+        random_seq = random.choices(options, weights=ordered_weights, k=motif_length)
         score = 0
         for pos, base_ind in enumerate(random_seq):
             score += pwm[pos][base_ind]
-        n_scores.append(score)
+        n_scores.append(score/ motif_length)
     n_scores.sort()
     return n_scores
 
@@ -141,7 +152,7 @@ def threshold_p(p, n_scores):
     print(n_scores[ind])
     return n_scores[ind]
 
-def to_CSV(seq_list, pwm_all, motif_ids, filename, threshold_fraction= 0.5, pval_cutoff=0.001):
+def to_CSV(seq_list, pwm_all, motif_ids,gc, filename, threshold_fraction= 0.5, pval_cutoff=0.001):
     directory = os.path.dirname(filename)
     if directory: 
         os.makedirs(directory, exist_ok=True)
@@ -150,8 +161,8 @@ def to_CSV(seq_list, pwm_all, motif_ids, filename, threshold_fraction= 0.5, pval
         write.writerow(["Sequence_ID", "Motif_ID", "Position", "Direction", "Score", "P-value", "Full/ Half-site"])
         for idx, pwm in enumerate(pwm_all):
             hs_len = len(pwm)//2
-            null_dist_full = generate_null_dist(pwm)
-            null_dist_half = generate_null_dist(pwm[:hs_len])
+            null_dist_full = generate_null_dist(pwm, gc)
+            null_dist_half = generate_null_dist(pwm[:hs_len], gc)
             th_full = threshold_p(pval_cutoff, null_dist_full)
             th_half = threshold_p(pval_cutoff, null_dist_half)
             for seq_id, seq in seq_list:
@@ -189,17 +200,16 @@ def main():
     if not motif_ids:
         print(f"Error: No motifs found for '{args.motif}'")
         sys.exit(1)
-        
-    pwm_all = get_allPWM(motif_ids)
 
     print(f"Reading sequences from {args.fasta}...")
     if not os.path.exists(args.fasta):
         print(f"Error: File '{args.fasta}' not found.")
         sys.exit(1)
-        
+    
     seq_list = read_input(args.fasta, is_file=True)
-    pwm_all = get_allPWM(motif_ids)
-    to_CSV(seq_list, pwm_all, motif_ids, filename=args.out, pval_cutoff=args.pvalue)
+    gc = calculate_background(seq_list)
+    pwm_all = get_allPWM(motif_ids, gc)
+    to_CSV(seq_list, pwm_all, motif_ids,gc, filename=args.out, pval_cutoff=args.pvalue)
 
 if __name__ == "__main__":
     main()

@@ -46,7 +46,7 @@ if st.button("Scan Sequence"):
                 pwm_all = get_allPWM(ids)
                 
                 output_csv = "temp_results.csv"
-                to_CSV(sequence_data, pwm_all, ids, filename=output_csv, p_value_cutoff=p_value)
+                to_CSV(sequence_data, pwm_all, ids, filename=output_csv, pval_cutoff=p_value)
                 
                 st.success("Scan Complete!")
                 if os.path.exists(output_csv) and os.path.getsize(output_csv) > 0:
