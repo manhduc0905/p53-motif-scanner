@@ -40,7 +40,7 @@ if st.button("Scan Sequence"):
     if not seq_list:
         st.error("Please provide DNA sequence data first.")
     else:
-        with st.spinner('Fetching Motifs {tf_name} and Scanning...'):
+        with st.spinner(f'Fetching Motifs {tf_name} and Scanning...'):
             try:
                 ids = reader(tf_name)
                 gc = calculate_background(seq_list)
@@ -67,3 +67,4 @@ if st.button("Scan Sequence"):
                     
             except Exception as e:
                 st.error(f"An error occurred: {e}")
+
