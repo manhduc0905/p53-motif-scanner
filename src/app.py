@@ -3,7 +3,7 @@ import os
 import pandas as pd
 import matplotlib.pyplot as plt
 
-from scan_p53 import reader, get_allPWM, read_input, to_CSV, bases, background
+from scan_p53 import reader, get_allPWM, calculate_background, read_input, to_CSV, bases, background
 from plots_hit import plot_motif_hits
 
 st.set_page_config(page_title="p53 Motif Scanner", layout="wide")
@@ -16,7 +16,7 @@ with st.sidebar:
     p_value = st.number_input("P-value Threshold", value=0.0001, format="%.5f")
     input_method = st.radio("Input Method", ["Paste Text", "Upload FASTA"])
 
-sequence_data = []
+seq_list = []
 
 if input_method == "Paste Text":
     raw_text = st.text_area("Paste DNA Sequence here (FASTA format or raw seq):", height=200)
@@ -24,9 +24,9 @@ if input_method == "Paste Text":
         if ">" in raw_text:
             with open("temp_input.fasta", "w") as f:
                 f.write(raw_text)
-            sequence_data = read_input("temp_input.fasta", is_file=True)
+            seq_list = read_input("temp_input.fasta", is_file=True)
         else:
-            sequence_data = read_input(raw_text, is_file=False)
+            seq_list = read_input(raw_text, is_file=False)
 
 elif input_method == "Upload FASTA":
     uploaded_file = st.file_uploader("Choose a FASTA file", type=["fasta", "txt"])
@@ -34,19 +34,20 @@ elif input_method == "Upload FASTA":
         string_data = uploaded_file.getvalue().decode("utf-8")
         with open("temp_input.fasta", "w") as f:
             f.write(string_data)
-        sequence_data = read_input("temp_input.fasta", is_file=True)
+        seq_list = read_input("temp_input.fasta", is_file=True)
 
 if st.button("Scan Sequence"):
-    if not sequence_data:
+    if not seq_list:
         st.error("Please provide DNA sequence data first.")
     else:
         with st.spinner('Fetching Motifs and Scanning...'):
             try:
                 ids = reader(tf_name)
-                pwm_all = get_allPWM(ids)
+                gc = calculate_background(seq_list)
+                pwm_all = get_allPWM(ids, gc)
                 
                 output_csv = "temp_results.csv"
-                to_CSV(sequence_data, pwm_all, ids, filename=output_csv, pval_cutoff=p_value)
+                to_CSV(seq_list, pwm_all, ids, gc, filename=output_csv, pval_cutoff=p_value)
                 
                 st.success("Scan Complete!")
                 if os.path.exists(output_csv) and os.path.getsize(output_csv) > 0:
