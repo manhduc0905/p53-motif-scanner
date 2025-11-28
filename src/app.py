@@ -3,7 +3,7 @@ import os
 import pandas as pd
 import matplotlib.pyplot as plt
 
-from scan_p53 import reader, get_allPWM, calculate_background, read_input, to_CSV, bases, background
+from scan_p53 import reader, get_allPWM, calculate_background, read_input, to_CSV
 from plots_hit import plot_motif_hits
 
 st.set_page_config(page_title="p53 Motif Scanner", layout="wide")
@@ -67,3 +67,4 @@ if st.button("Scan Sequence"):
                     
             except Exception as e:
                 st.error(f"An error occurred: {e}")
+
