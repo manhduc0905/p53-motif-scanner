@@ -6,14 +6,19 @@ import matplotlib.pyplot as plt
 from scan_p53 import reader, get_allPWM, calculate_background, read_input, to_CSV
 from plots_hit import plot_motif_hits
 
-st.set_page_config(page_title="p53 Motif Scanner", layout="wide")
-st.title("p53 Motif Scanner")
-st.markdown("Upload a DNA sequence to scan for p53 binding sites using a statistical Position Weight Matrix (PWM).")
+st.set_page_config(page_title="Motif Scanner", layout="wide")
+st.title("Motif Scanner")
+st.markdown("Upload a DNA sequence to scan for a choosen transcription factor binding sites using Position Weight Matrix (PWM).")
 
 with st.sidebar:
     st.header("Settings")
     tf_name = st.text_input("Transcription Factor", value="TP53")
-    p_value = st.number_input("P-value Threshold", value=0.0001, format="%.5f")
+    p_value = st.number_input("P-value Cutoff (Significance)", 
+                              value=0.0001, 
+                              min_value=1e-10, 
+                              max_value=0.05, 
+                              format="%.6f",
+                              help="Lower value = Stricter/Stronger sites only")
     input_method = st.radio("Input Method", ["Paste Text", "Upload FASTA"])
 
 seq_list = []
@@ -40,7 +45,7 @@ if st.button("Scan Sequence"):
     if not seq_list:
         st.error("Please provide DNA sequence data first.")
     else:
-        with st.spinner(f'Fetching Motifs {tf_name} with {p_value} and Scanning...'):
+        with st.spinner(f'Fetching Motifs {tf_name} with p_value = {p_value} and Scanning...'):
             try:
                 ids = reader(tf_name)
                 gc = calculate_background(seq_list)
