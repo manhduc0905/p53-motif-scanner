@@ -9,7 +9,7 @@ def plot_motif_hits(df, seq_name = "Sequence"):
     half_pos  = []
     half_score = []
 
-    for ind, row in df.itterows():
+    for ind, row in df.iterows():
         pos = int(row["Position"])
         score = float(row["Score"])
         site = int(row["Full/ Half-site"])
@@ -49,4 +49,5 @@ if __name__ == "__main__":
     args = parser.parse_args()
     
     plot_motif_hits(args.file)
+
     plt.show()
